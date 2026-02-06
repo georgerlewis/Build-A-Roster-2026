@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>2026 Nationals Opening Day Roster Builder</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+
+<style>
+:root {
+  --nat-red: #ba0c2f;
+  --nat-blue: #0c2340;
+  --panel: #f3f7ff;
+  --bg: #ffffff;
+  --green: #1e7e34;
+  --warn: #b00020;
+  --muted: #6b7280;
+}
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  margin: 0;
+  background: var(--bg);
+  color: var(--nat-blue);
+}
+header {
+  background: linear-gradient(90deg, var(--nat-red), var(--nat-blue));
+  color: #fff;
+  padding: 16px 20px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+header h1 { margin: 0; font-size: 18px; }
+header a {
+  color: #fff;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255,255,255,.6);
+}
+header a:hover { border-bottom-color: #fff; }
+
+.wrap {
+  display: flex; gap: 16px; padding: 16px; align-items: flex-start; flex-wrap: wrap;
+}
+.col {
+  flex: 1; min-width: 320px; border: 2px solid var(--nat-blue);
+  border-radius: 8px; padding: 12px; background: var(--panel);
+}
+h2 { color: var(--nat-red); margin-top: 0; }
+.players-list, .roster-list {
+  max-height: 62vh; overflow: auto; padding: 6px;
+  background: #fff; border-radius: 6px; border: 1px solid #e6e9f0;
+}
+.pos-header {
+  font-weight: 700; color: var(--nat-blue); margin-top: 10px; margin-bottom: 6px;
+}
+.player-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 8px 6px; border-bottom: 1px solid #efeff5;
+}
+.player-meta { font-size: 14px; color: #111; }
+.badges { margin-top: 4px; display:flex; gap:6px; flex-wrap: wrap; }
+.badge {
+  font-size: 12px; padding: 2px 6px; border-radius: 999px;
+  border: 1px solid #e5e7eb; color: #111; background: #fff;
+}
+.badge.on40 { border-color: rgba(12,35,64,.25); }
+.badge.not40 { border-color: rgba(186,12,47,.35); color: var(--warn); }
+.badge.oop { border-color: rgba(186,12,47,.35); color: var(--warn); }
+.badge.rule5 { border-color: rgba(186,12,47,.35); color: var(--warn); }
+.badge.opt { border-color: rgba(12,35,64,.25); color: #111; }
+.tag {
+  font-size: 12px; padding: 3px 6px; border-radius: 6px; color: white; margin-left: 8px;
+}
+.tag.int { background: var(--nat-blue); }
+.tag.other { background: var(--green); }
+
+button {
+  background: var(--nat-blue); color: white; border: none; padding: 6px 10px;
+  border-radius: 6px; cursor: pointer;
+}
+button.secondary { background: #ffffff; color: var(--nat-blue); border: 1px solid var(--nat-blue); }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+small.muted { color: var(--muted); }
+
+.inline { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+hr.soft { border: none; border-top: 1px solid #e6e9f0; margin: 10px 0; }
+
+/* Screenshot-friendly summary card */
+.summary-card {
+  background: #fff;
+  border: 1px solid #e6e9f0;
+  border-radius: 10px;
+  padding: 12px;
+}
+.summary-top {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.summary-title {
+  margin: 0;
+  font-size: 16px;
+  color: var(--nat-blue);
+}
+.summary-sub {
+  margin: 2px 0 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+.grid-2 {
+  display:grid; gap:12px;
+  grid-template-columns: 1fr 1fr;
+}
+@media (max-width: 900px) {.grid-2{ grid-template-columns: 1fr; }}
+
+.section-card {
+  border:1px solid #eef1f7; border-radius:10px; background:#fff;
+  padding:12px;
+}
+.section-title {
+  margin:0 0 8px 0; font-size:14px; letter-spacing:.2px; color:#24324a;
+}
+.clean-list { margin:0; padding-left:18px; }
+.clean-list li { margin:4px 0; }
+
+.table {
+  width:100%;
+  border-collapse: collapse;
+  margin-top: 6px;
+}
+.table th, .table td {
+  text-align:left;
+  padding: 6px 8px;
+  border-bottom: 1px solid #f1f3f9;
+  font-size: 14px;
+}
+.table th {
+  color: #4a5568;
+  font-weight: 600;
+  background: #fbfcff;
+}
+.table tr:last-child td { border-bottom:none; }
+.risk { color: var(--warn); font-weight: 700; }
+
+footer {
+  padding: 12px 18px;
+  font-size: 13px;
+  color: #333;
+}
+footer a { color: var(--nat-blue); }
+</style>
+</head>
+
+<body>
+<header>
+  <h1>2026 Nationals Opening Day Roster Builder</h1>
+  <div class="inline">
+    <a href="https://georgerlewis.substack.com/" target="_blank" rel="noopener noreferrer">
+      Read more on my Substack →
+    </a>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="col" style="max-width:750px;">
+    <h2>Player Selection</h2>
+    <div class="inline" style="margin-bottom:10px;">
+      <button id="copyLink" class="secondary">Copy share URL</button>
+      <button id="reset" class="secondary">Reset</button>
+      <small class="muted">Tip: the Summary panel (right) is built for screenshots.</small>
+    </div>
+
+    <div class="players-list" id="playersList" aria-live="polite"></div>
+  </div>
+
+  <div class="col">
+    <h2>Your Roster</h2>
+
+    <div class="summary-card" id="summaryPanel">
+      <div class="summary-top">
+        <div>
+          <h3 class="summary-title" style="margin:0;">Roster Summary</h3>
+          <p class="summary-sub">Includes options / waiver / Rule 5 flags once you fill in player fields.</p>
+        </div>
+        <div class="inline">
+          <button id="refreshSummary" class="secondary">Refresh</button>
+        </div>
+      </div>
+
+      <hr class="soft"/>
+
+      <div id="summaryContent"></div>
+    </div>
+
+    <div style="margin-top:12px;">
+      <strong>Roster (by position)</strong>
+      <div class="roster-list" id="rosterList"></div>
+    </div>
+
+    <div style="margin-top:12px;">
+      <label><strong>Designated Hitter (DH)</strong></label><br>
+      <select id="dhSelect"><option value="">(select DH)</option></select>
+      <div><small class="muted">DH can only be chosen from Bench.</small></div>
+    </div>
+
+    <div style="margin-top:12px;">
+      <label><strong>Lineup (batting order)</strong></label>
+      <div id="lineupList" class="players-list" style="max-height: 32vh;"></div>
+      <small class="muted">Lineup uses your selected C, 1B, 2B, 3B, SS, 3×OF, and DH (if selected).</small>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <small class="muted">
+    “Other” players are temporary and disappear when removed or when the page reloads.  
+    Follow my writing here:
+    <a href="https://georgerlewis.substack.com/" target="_blank" rel="noopener noreferrer">georgerlewis.substack.com</a>
+  </small>
+</footer>
+
+<script>
+/**
+ * =========================
+ * 1) EDIT YOUR PLAYER LIST HERE
+ * =========================
+ * This is where you replace the list with the actual 40-man (and fill in options info).
+ *
+ * Fields you can fill later (no assumptions made):
+ * - on40: boolean (true if on 40-man)
+ * - options: number|null (options remaining, if you track it)
+ * - outOfOptions: boolean (true if OOO)
+ * - rule5: boolean (true if Rule 5 constraints)
+ */
+const PLAYERS = [
+  // --- Example structure using your existing "Internal" entries only ---
+  // Replace / expand with your real 40-man list.
+  { id: 1,  name: "Keibert Ruiz",       posList: ["C"],        type: "Internal", on40: null, options: null, outOfOptions: false, rule5: false },
+  { id: 2,  name: "Luis García Jr.",    posList: ["2B","1B"],  type: "Internal", on40: null, options: null, outOfOptions: false, rule5: false },
+  { id: 3,  name: "MacKenzie Gore",     posList: ["SP"],       type: "Internal", on40: null, options: null, outOfOptions: false, rule5: false },
+  { id: 4,  name: "Josiah Gray",        posList: ["SP","RP"],  type: "Internal", on40: null, options: null, outOfOptions: false, rule5: false },
+  { id: 5,  name: "Riley Adams",        posList: ["C"],        type: "Internal", on40: null, options: null, outOfOptions: false, rule5: false },
+  { id: 6,  name: "CJ Abrams",          posList: ["SS","2B"],  type: "Internal", on40: null, options: null, outOfOptions: false, rule5: false },
+  { id: 7,  name: "Jake Irvin",         posList: ["SP","RP"],  type: "Internal", on40: null, options: null, outOfOptions: false, rule5: false },
+  { id: 8,  name: "Cade Cavalli",       posList: ["SP","RP"],  type: "Internal", on40: null, options: null, outOfOptions: false, rule5: false },
+  { id: 9,  name: "Jacob Young",        posList: ["OF"],       type: "Internal", on40: null, options: null, outOfOptions: false, rule5: false },
+  { id: 10, name: "Mitchell Parker",    posList: ["SP","RP"],  type: "Internal", on40: null, options: null, outOfOptions: false, rule5: false },
+  { id: 11, name: "Jose A. Ferrer",     posList: ["RP"],       type: "Internal", on40: null, options: null, outOfOptions: false, rule5: false },
+  { id: 12, name: "James Wood",         posList: ["OF"],       type: "Internal", on40: null, options: null, outOfOptions: false, rule5: false },
+  { id: 13, name: "Dylan Crews",        posList: ["OF"],       type: "Internal", on40: null, options: null, outOfOptions: false, rule5: false },
+  { id: 14, name: "Brad Lord",          posList: ["SP","RP"],  type: "Internal", on40: null, options: null, outOfOptions: false, rule5: false },
+  { id: 15, name: "Daylen Lile",        posList: ["OF"],       type: "Internal", on40: null, options: null, outOfOptions: false, rule5: false },
+  { id: 16, name: "Brady House",        posList: ["3B"],       type: "Internal", on40: null, options: null, outOfOptions: false, rule5: false },
+  { id: 17, name: "Robert Hassell III", posList: ["OF"],       type: "Internal", on40: null, options: null, outOfOptions: false, rule5: false },
+  { id: 18, name: "Nasim Nunez",        posList: ["SS","2B"],  type: "Internal", on40: null, options: null, outOfOptions: false, rule5: false },
+  { id: 19, name: "Andres Chaparro",    posList: ["1B"],       type: "Internal", on40: null, options: null, outOfOptions: false, rule5: false },
+  { id: 20, name: "Jose Tena",          posList: ["2B","3B"],  type: "Internal", on40: null, options: null, outOfOptions: false, rule5: false },
+  { id: 21, name: "Clayton Beeter",     posList: ["RP"],       type: "Internal", on40: null, options: null, outOfOptions: false, rule5: false },
+  { id: 22, name: "Cole Henry",         posList: ["RP"],       type: "Internal", on40: null, options: null, outOfOptions: false, rule5: false },
+  { id: 23, name: "PJ Poulin",          posList: ["RP"],       type: "Internal", on40: null, options: null, outOfOptions: false, rule5: false },
+  { id: 24, name: "Julian Fernandez",   posList: ["RP"],       type: "Internal", on40: null, options: null, outOfOptions: false, rule5: false },
+  { id: 25, name: "Konnor Pilkington",  posList: ["RP"],       type: "Internal", on40: null, options: null, outOfOptions: false, rule5: false },
+  { id: 26, name: "Orlando Ribalta",    posList: ["RP"],       type: "Internal", on40: null, options: null, outOfOptions: false, rule5: false },
+  { id: 27, name: "Jackson Rutledge",   posList: ["RP"],       type: "Internal", on40: null, options: null, outOfOptions: false, rule5: false },
+  { id: 28, name: "Drew Millas",        posList: ["C"],        type: "Internal", on40: null, options: null, outOfOptions: false, rule5: false },
+];
+
+// (2) Free agents removed: if any "FA" somehow exist, filter them out anyway.
+const PLAYERS_ACTIVE = PLAYERS.filter(p => p.type !== "FA");
+
+let tempId = 10000;
+
+// =========================
+// Roster rules
+// =========================
+const ROSTER_LIMITS = { SP:5, RP:8, C:2, "1B":1, "2B":1, "3B":1, SS:1, OF:3, Bench:5 };
+// You can tweak these any time.
+const BENCH_ELIGIBLE = ["C","1B","2B","3B","SS","OF"];
+const POSITION_ORDER = ["SP","RP","C","1B","2B","3B","SS","OF","Bench"];
+
+let rosterAssignments = {}; // { [id]: "SP" | "RP" | ... }
+let dh = null;
+let lineup = [];
+
+// =========================
+// DOM hooks
+// =========================
+const playersListEl = document.getElementById("playersList");
+const rosterListEl  = document.getElementById("rosterList");
+const dhSelectEl    = document.getElementById("dhSelect");
+const summaryContentEl = document.getElementById("summaryContent");
+
+// =========================
+// Share: encode/decode state into the URL
+// =========================
+function encodeState(obj){
+  const json = JSON.stringify(obj);
+  const b64 = btoa(unescape(encodeURIComponent(json)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/,'');
+  return b64;
+}
+function decodeState(b64){
+  try{
+    const padded = b64.replace(/-/g,'+').replace(/_/g,'/') + '==='.slice((b64.length + 3) % 4);
+    const json = decodeURIComponent(escape(atob(padded)));
+    return JSON.parse(json);
+  }catch(e){ console.warn('Invalid share state', e); return null; }
+}
+function currentShareState(){
+  return { v:2, rosterAssignments, dh, lineup };
+}
+function applyShareState(state){
+  if(!state || state.v!==2) return false;
+
+  rosterAssignments = {};
+  if (state.rosterAssignments && typeof state.rosterAssignments==='object'){
+    for (const id in state.rosterAssignments){
+      const pid = Number(id);
+      const pos = state.rosterAssignments[id];
+      if (PLAYERS_ACTIVE.some(p=>p.id===pid) && POSITION_ORDER.includes(pos)){
+        rosterAssignments[pid] = pos;
+      }
+    }
+  }
+  dh = (typeof state.dh==='number' && rosterAssignments[state.dh]==='Bench') ? state.dh : null;
+  lineup = Array.isArray(state.lineup) ? state.lineup.filter(id => PLAYERS_ACTIVE.some(p=>p.id===id)) : [];
+
+  renderAll();
+  return true;
+}
+(function loadStateFromURL(){
+  const url = new URL(window.location.href);
+  const fromQuery = url.searchParams.get('s');
+  const fromHash = new URLSearchParams(url.hash.replace(/^#/, '')).get('s');
+  const token = fromQuery || fromHash;
+  if (token){
+    const st = decodeState(token);
+    if (st) applyShareState(st);
+  }
+})();
+
+function buildShareURL(){
+  const state = currentShareState();
+  const token = encodeState(state);
+  const url = new URL(window.location.href);
+  url.searchParams.set('s', token);
+  url.hash = '';
+  return url.toString();
+}
+function syncAddressBar(){
+  const token = encodeState(currentShareState());
+  const url = new URL(window.location.href);
+  url.searchParams.set('s', token);
+  window.history.replaceState(null, '', url);
+}
+
+document.getElementById('copyLink').onclick = async () => {
+  const link = buildShareURL();
+  try{
+    await navigator.clipboard.writeText(link);
+    alert('Share URL copied to clipboard!');
+  }catch{
+    prompt('Copy this URL:', link);
+  }
+};
+document.getElementById('reset').onclick = () => {
+  rosterAssignments = {};
+  dh = null;
+  lineup = [];
+  renderAll();
+};
+document.getElementById('refreshSummary').onclick = () => {
+  renderSummaryPanel();
+};
+
+// =========================
+// Helpers
+// =========================
+function countAssigned(){
+  const c = {};
+  Object.values(rosterAssignments).forEach(p => c[p] = (c[p]||0) + 1);
+  return c;
+}
+
+function getPlayerById(id){
+  return PLAYERS_ACTIVE.find(p => p.id == id);
+}
+
+function getRosteredByPos(pos){
+  return Object.keys(rosterAssignments)
+    .filter(id => rosterAssignments[id] === pos)
+    .map(id => getPlayerById(id))
+    .filter(Boolean);
+}
+
+function playerBadges(p){
+  const badges = [];
+  if (p.on40 === true) badges.push(`<span class="badge on40">40-man</span>`);
+  if (p.on40 === false) badges.push(`<span class="badge not40">Not on 40</span>`);
+  if (typeof p.options === "number") badges.push(`<span class="badge opt">Opt: ${p.options}</span>`);
+  if (p.outOfOptions) badges.push(`<span class="badge oop">Out of options</span>`);
+  if (p.rule5) badges.push(`<span class="badge rule5">Rule 5</span>`);
+  return badges.length ? `<div class="badges">${badges.join('')}</div>` : '';
+}
+
+// =========================
+// Lineup
+// =========================
+function getEligibleHittersPool(){
+  const hitters = [];
+  ['C','1B','2B','3B','SS'].forEach(pos => hitters.push(...getRosteredByPos(pos).slice(0,1)));
+  hitters.push(...getRosteredByPos('OF').slice(0,3));
+  if (dh) {
+    const dhP = getPlayerById(dh);
+    if (dhP) hitters.push(dhP);
+  }
+  const seen = new Set();
+  return hitters.filter(p => (seen.has(p.id) ? false : (seen.add(p.id), true)));
+}
+function syncLineupWithRoster(){
+  const pool = getEligibleHittersPool().map(p => p.id);
+  const keep = lineup.filter(id => pool.includes(id));
+  const missing = pool.filter(id => !keep.includes(id));
+  lineup = [...keep, ...missing];
+}
+function moveLineup(id, dir){
+  const idx = lineup.indexOf(id);
+  if (idx < 0) return;
+  const swapWith = idx + (dir === 'up' ? -1 : 1);
+  if (swapWith < 0 || swapWith >= lineup.length) return;
+  const tmp = lineup[idx];
+  lineup[idx] = lineup[swapWith];
+  lineup[swapWith] = tmp;
+  renderLineup();
+}
+function removeFromLineup(id){
+  lineup = lineup.filter(x => x !== id);
+  renderLineup();
+}
+function renderLineup(){
+  const box = document.getElementById('lineupList');
+  if (!box) return;
+  box.innerHTML = '';
+  syncLineupWithRoster();
+
+  lineup.forEach((id, i) => {
+    const p = getPlayerById(id);
+    if (!p) return;
+    const posLabel = (dh && id == dh) ? 'DH' : (rosterAssignments[id] || (p.posList[0] || ''));
+    const row = document.createElement('div');
+    row.className = 'player-row';
+    row.innerHTML = `
+      <div class="player-meta">
+        <strong>${i+1}.</strong> ${p.name} <span style="color:#333">(${posLabel})</span>
+      </div>
+      <div>
+        <button class="secondary" ${i===0?'disabled':''} onclick="moveLineup(${id}, 'up')">↑</button>
+        <button class="secondary" ${i===lineup.length-1?'disabled':''} onclick="moveLineup(${id}, 'down')">↓</button>
+        <button class="secondary" onclick="removeFromLineup(${id})">Remove</button>
+      </div>
+    `;
+    box.appendChild(row);
+  });
+}
+
+// =========================
+// Player list render
+// =========================
+function renderPlayers(){
+  playersListEl.innerHTML = "";
+  const positions = ["SP","RP","C","1B","2B","3B","SS","OF"];
+
+  positions.forEach(pos => {
+    const header = document.createElement("div");
+    header.className = "pos-header";
+    header.textContent = pos;
+    playersListEl.appendChild(header);
+
+    PLAYERS_ACTIVE
+      .filter(p => p.posList.includes(pos))
+      .forEach(p => playersListEl.appendChild(makePlayerRow(p, pos)));
+
+    const addBtn = document.createElement("button");
+    addBtn.textContent = "Add Other (Trade / Not Listed)";
+    addBtn.style.margin = "4px 0 10px 0";
+    addBtn.onclick = () => addOtherPlayer(pos);
+    playersListEl.appendChild(addBtn);
+  });
+}
+
+function makePlayerRow(p, sectionPos){
+  const div = document.createElement("div");
+  div.className = "player-row";
+  const assigned = rosterAssignments[p.id] != undefined;
+
+  const left = document.createElement("div");
+  left.className = "player-meta";
+  left.innerHTML = `
+    <strong>${p.name}</strong>
+    <span style="color:#333">(${p.posList.join(", ")})</span>
+    <span class="tag ${p.type==="Other" ? "other" : "int"}">${p.type}</span>
+    ${playerBadges(p)}
+  `;
+
+  const right = document.createElement("div");
+  if(!assigned){
+    const b = document.createElement("button");
+    b.textContent = "Add";
+    b.onclick = () => onAddClick(p.id, sectionPos);
+    right.appendChild(b);
+  } else {
+    const lbl = document.createElement("span");
+    lbl.textContent = `→ ${rosterAssignments[p.id]}`;
+    const rm = document.createElement("button");
+    rm.textContent = "Remove";
+    rm.onclick = () => removeFromRoster(p.id);
+    rm.style.marginLeft = "8px";
+    right.appendChild(lbl);
+    right.appendChild(rm);
+  }
+
+  div.appendChild(left);
+  div.appendChild(right);
+  return div;
+}
+
+function addOtherPlayer(pos){
+  const name = prompt(`Enter name for Other (${pos}) player:`); 
+  if(!name) return;
+
+  // No money prompts anymore (per your request).
+  const newP = {
+    id: tempId++,
+    name,
+    posList: [pos],
+    type: "Other",
+    on40: null,
+    options: null,
+    outOfOptions: false,
+    rule5: false
+  };
+  PLAYERS_ACTIVE.push(newP);
+  rosterAssignments[newP.id] = pos;
+  renderAll();
+}
+
+// =========================
+// Add/remove logic
+// =========================
+function onAddClick(id, preferredPos) {
+  const p = getPlayerById(id);
+  if (!p || rosterAssignments[id]) return;
+
+  const counts = countAssigned();
+
+  if (
+    preferredPos &&
+    p.posList.includes(preferredPos) &&
+    ROSTER_LIMITS[preferredPos] &&
+    ((counts[preferredPos] || 0) < ROSTER_LIMITS[preferredPos])
+  ) {
+    rosterAssignments[id] = preferredPos;
+    renderAll();
+    return;
+  }
+
+  const alt = p.posList.find(pos =>
+    ROSTER_LIMITS[pos] && ((counts[pos] || 0) < ROSTER_LIMITS[pos])
+  );
+  if (alt) {
+    rosterAssignments[id] = alt;
+    renderAll();
+    return;
+  }
+
+  if (
+    p.posList.some(pos => BENCH_ELIGIBLE.includes(pos)) &&
+    ((counts["Bench"] || 0) < ROSTER_LIMITS["Bench"])
+  ) {
+    rosterAssignments[id] = "Bench";
+    renderAll();
+    return;
+  }
+
+  alert("No open slots for that player in the selected position (or elsewhere).");
+}
+
+function removeFromRoster(id){
+  delete rosterAssignments[id];
+  if (dh == id) dh = null;
+  renderAll();
+}
+
+// =========================
+// Roster render
+// =========================
+function renderRoster(){
+  rosterListEl.innerHTML = "";
+  POSITION_ORDER.forEach(pos => {
+    const header = document.createElement("div");
+    const cnt = Object.values(rosterAssignments).filter(x => x === pos).length;
+    header.className = "pos-header";
+    header.textContent = `${pos} (${cnt}/${ROSTER_LIMITS[pos] || 0})`;
+    rosterListEl.appendChild(header);
+
+    Object.keys(rosterAssignments)
+      .filter(id => rosterAssignments[id] === pos)
+      .forEach(id => {
+        const p = getPlayerById(id);
+        if(!p) return;
+
+        const d = document.createElement("div");
+        d.className = "player-row";
+        d.innerHTML = `
+          <div class="player-meta">
+            <strong>${p.name}</strong>
+            <div style="margin-top:2px;">${playerBadges(p)}</div>
+          </div>
+          <div><button onclick="removeFromRoster(${id})">Remove</button></div>
+        `;
+        rosterListEl.appendChild(d);
+      });
+  });
+}
+
+// =========================
+// DH selector (Bench only)
+// =========================
+function renderDHSelector(){
+  dhSelectEl.innerHTML = '<option value="">(select DH)</option>';
+
+  Object.keys(rosterAssignments)
+    .filter(id => rosterAssignments[id] === 'Bench')
+    .forEach(id => {
+      const p = getPlayerById(id);
+      if(p){
+        const o = document.createElement('option');
+        o.value = p.id;
+        o.textContent = `${p.name} (Bench)`;
+        dhSelectEl.appendChild(o);
+      }
+    });
+
+  const stillValid = dh && rosterAssignments[dh] === 'Bench';
+  dhSelectEl.value = stillValid ? dh : "";
+  dh = stillValid ? dh : null;
+
+  syncLineupWithRoster();
+  renderLineup();
+}
+dhSelectEl.onchange = () => {
+  dh = dhSelectEl.value ? Number(dhSelectEl.value) : null;
+  syncLineupWithRoster();
+  renderLineup();
+  renderSummaryPanel();
+};
+
+// =========================
+// Screenshot-friendly summary panel
+// =========================
+function buildSummaryPanelHtml(){
+  const sps = getRosteredByPos('SP').slice(0, ROSTER_LIMITS.SP);
+  const rps = getRosteredByPos('RP').slice(0, ROSTER_LIMITS.RP);
+
+  const lineupRows = lineup.map((id, idx) => {
+    const p = getPlayerById(id);
+    if (!p) return null;
+    const posLabel = (dh && id == dh) ? 'DH' : (rosterAssignments[id] || (p.posList[0]||''));
+    return { num: idx+1, name: p.name, pos: posLabel };
+  }).filter(Boolean);
+
+  // Roster management flags (based ONLY on what you fill in)
+  const selectedPlayers = Object.keys(rosterAssignments).map(id => getPlayerById(id)).filter(Boolean);
+  const notSelectedPlayers = PLAYERS_ACTIVE.filter(p => !rosterAssignments[p.id]);
+
+  const needs40Add = selectedPlayers.filter(p => p.on40 === false);
+  const waiverRisk = notSelectedPlayers.filter(p => p.outOfOptions === true);
+  const rule5Risk  = notSelectedPlayers.filter(p => p.rule5 === true);
+
+  const spList = sps.length
+    ? `<ol class="clean-list">${sps.map(p=>`<li>${p.name}</li>`).join('')}</ol>`
+    : `<em>No SP selected.</em>`;
+
+  const rpList = rps.length
+    ? `<ul class="clean-list">${rps.map(p=>`<li>${p.name}</li>`).join('')}</ul>`
+    : `<em>No RP selected.</em>`;
+
+  const lineupTable = lineupRows.length
+    ? `
+      <table class="table" aria-label="Batting Order">
+        <thead><tr><th>#</th><th>Player</th><th>Pos</th></tr></thead>
+        <tbody>
+          ${lineupRows.map(r=>`<tr><td>${r.num}</td><td>${r.name}</td><td>${r.pos}</td></tr>`).join('')}
+        </tbody>
+      </table>`
+    : `<em>No lineup set (needs C, 1B, 2B, 3B, SS, 3×OF, and DH if selected).</em>`;
+
+  function listOrNone(arr){
+    if (!arr.length) return `<span class="muted">None</span>`;
+    return `<ul class="clean-list">${arr.map(p=>`<li>${p.name}</li>`).join('')}</ul>`;
+  }
+
+  return `
+    <div class="grid-2">
+      <div class="section-card">
+        <h4 class="section-title">Starting Pitchers</h4>
+        ${spList}
+      </div>
+      <div class="section-card">
+        <h4 class="section-title">Bullpen</h4>
+        ${rpList}
+      </div>
+    </div>
+
+    <div class="section-card" style="margin-top:12px;">
+      <h4 class="section-title">Lineup</h4>
+      ${lineupTable}
+    </div>
+
+    <div class="section-card" style="margin-top:12px;">
+      <h4 class="section-title">Roster Management (uses your on40 / options / Rule 5 fields)</h4>
+
+      <div class="${needs40Add.length ? 'risk' : ''}">
+        <strong>Selected but not on 40-man (needs add):</strong>
+      </div>
+      ${listOrNone(needs40Add)}
+
+      <hr class="soft"/>
+
+      <div class="${waiverRisk.length ? 'risk' : ''}">
+        <strong>Not selected + out of options (waiver risk if sent down):</strong>
+      </div>
+      ${listOrNone(waiverRisk)}
+
+      <hr class="soft"/>
+
+      <div class="${rule5Risk.length ? 'risk' : ''}">
+        <strong>Not selected + Rule 5 constraint (must stay / offer back):</strong>
+      </div>
+      ${listOrNone(rule5Risk)}
+    </div>
+
+    <div style="margin-top:10px; text-align:center;">
+      <small class="muted">
+        Built by George Lewis • <a href="https://georgerlewis.substack.com/" target="_blank" rel="noopener noreferrer">
+        georgerlewis.substack.com</a>
+      </small>
+    </div>
+  `;
+}
+
+function renderSummaryPanel(){
+  syncLineupWithRoster();
+  summaryContentEl.innerHTML = buildSummaryPanelHtml();
+}
+
+// =========================
+// Main render
+// =========================
+function renderAll(){
+  renderPlayers();
+  renderRoster();
+  renderDHSelector();
+  syncLineupWithRoster();
+  renderLineup();
+  renderSummaryPanel();
+  syncAddressBar();
+}
+
+renderAll();
+</script>
+</body>
+</html>
