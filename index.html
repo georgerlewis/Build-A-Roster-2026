@@ -34,7 +34,8 @@ body{
               radial-gradient(900px 500px at 85% 10%, rgba(12,35,64,.35), transparent 55%),
               var(--bg);
   color: var(--text);
-  overflow: hidden; /* no page scroll */
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 header{
@@ -331,6 +332,45 @@ hr.soft{
 @media (max-width: 980px){
   .share-two-col{ grid-template-columns: 1fr; }
 }
+/* =========================
+   MOBILE FIXES
+   ========================= */
+@media (max-width: 900px){
+
+  body{
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .main{
+    height: auto;
+    min-height: calc(100vh - var(--header-h, 58px));
+    padding: 10px;
+  }
+
+  .wrap{
+    flex-direction: column;
+  }
+
+  .col{
+    min-width: 0;
+    height: auto;
+  }
+
+  .col .inner{
+    height: auto;
+  }
+
+  .panel-body{
+    max-height: none;
+    overflow: visible;
+  }
+
+  .share-two-col{
+    grid-template-columns: 1fr;
+  }
+}
+
 </style>
 </head>
 
