@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>2026 Washington Nationals Roster Builder </title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+
+<style>
+:root{
+  /* Dark scheme */
+  --bg: #07111f;
+  --panel: #0c1b33;
+  --panel2:#0a162a;
+  --card: #0f2547;
+  --text: #e8eefb;
+  --muted:#9fb0d1;
+  --border:#1d3a66;
+
+  --nat-red:#ba0c2f;
+  --nat-blue:#0c2340;
+
+  --good:#47d18c;
+  --warn:#ff5a6d;
+  --btn:#17365f;
+  --btn2:#0f2547;
+}
+
+*{box-sizing:border-box;}
+html, body{ height:100%; }
+body{
+  margin:0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background: radial-gradient(1200px 600px at 20% 0%, rgba(186,12,47,.18), transparent 60%),
+              radial-gradient(900px 500px at 85% 10%, rgba(12,35,64,.35), transparent 55%),
+              var(--bg);
+  color: var(--text);
+  overflow: hidden; /* no page scroll */
+}
+
+header{
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  background: linear-gradient(90deg, rgba(186,12,47,.30), rgba(12,35,64,.55));
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+header h1{
+  margin:0;
+  font-size: 16px;
+  letter-spacing:.2px;
+}
+header a{
+  color: var(--text);
+  text-decoration:none;
+  border-bottom:1px solid rgba(232,238,251,.35);
+}
+header a:hover{ border-bottom-color: var(--text); }
+
+.top-actions{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  flex-wrap: wrap;
+}
+
+button{
+  background: linear-gradient(180deg, rgba(23,54,95,.95), rgba(15,37,71,.95));
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,.08);
+  padding: 7px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+}
+button.secondary{
+  background: linear-gradient(180deg, rgba(15,37,71,.95), rgba(10,22,42,.95));
+}
+button:disabled{ opacity:.55; cursor:not-allowed; }
+
+select{
+  background: rgba(10,22,42,.9);
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 10px;
+  padding: 7px 10px;
+}
+
+small.muted{ color: var(--muted); }
+
+/* ✅ FIX: dynamic header height (no clipping when header wraps) */
+.main{
+  height: calc(100vh - var(--header-h, 58px));
+  padding: 14px 14px 16px 14px;
+}
+
+.page{
+  height: 100%;
+  display: none;
+}
+.page.active{
+  display: block;
+}
+
+.wrap{
+  height: 100%;
+  display:flex;
+  gap: 14px;
+}
+
+.col{
+  flex:1;
+  min-width: 340px;
+  height: 100%;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(12,27,51,.92), rgba(10,22,42,.92));
+  overflow: hidden;
+  display:flex;
+  flex-direction: column;
+}
+
+.col h2{
+  margin: 0;
+  padding: 12px 12px 10px 12px;
+  font-size: 14px;
+  letter-spacing: .2px;
+  color: var(--text);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  background: linear-gradient(90deg, rgba(186,12,47,.16), rgba(12,35,64,.22));
+}
+
+.col .inner{
+  padding: 10px 12px 12px 12px;
+  height: 100%;
+  overflow: hidden;
+  display:flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.panel{
+  background: rgba(7,17,31,.55);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 12px;
+  overflow: hidden;
+  display:flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.panel-title{
+  padding: 9px 10px;
+  font-weight: 700;
+  font-size: 12.5px;
+  letter-spacing:.2px;
+  color: var(--text);
+  background: rgba(15,37,71,.65);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+
+.panel-body{
+  padding: 10px;
+  overflow: auto;
+  min-height: 0;
+}
+
+/* rows */
+.pos-header{
+  font-weight: 800;
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: .5px;
+  margin: 10px 2px 6px 2px;
+}
+.row{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap: 10px;
+  padding: 9px 8px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.row:last-child{ border-bottom:none; }
+.meta{
+  font-size: 13px;
+  line-height: 1.25;
+  color: var(--text);
+}
+.meta strong{ font-size: 13.5px; }
+.meta .sub{
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.badges{
+  margin-top: 6px;
+  display:flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.badge{
+  font-size: 11.5px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(15,37,71,.55);
+  color: var(--text);
+}
+.badge.warn{
+  border-color: rgba(255,90,109,.45);
+  color: var(--warn);
+  background: rgba(255,90,109,.08);
+}
+.badge.good{
+  border-color: rgba(71,209,140,.35);
+  color: var(--good);
+  background: rgba(71,209,140,.08);
+}
+
+/* 40-man / NRI pill (used on Pages 1–2 only) */
+.pill{
+  display:inline-block;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-left: 8px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(15,37,71,.35);
+  color: var(--text);
+}
+.pill.nri{
+  border-color: rgba(255,90,109,.35);
+  color: var(--warn);
+  background: rgba(255,90,109,.10);
+}
+.pill.man40{
+  border-color: rgba(71,209,140,.30);
+  color: var(--good);
+  background: rgba(71,209,140,.10);
+}
+
+.inline{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.kv{
+  display:flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+.kv span{
+  padding: 4px 8px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 999px;
+  background: rgba(15,37,71,.35);
+}
+
+hr.soft{
+  border:none;
+  border-top: 1px solid rgba(255,255,255,.08);
+  margin: 8px 0;
+}
+
+/* Page navbar */
+.navbar{
+  padding: 10px 12px;
+  border-top: 1px solid rgba(255,255,255,.06);
+  background: rgba(10,22,42,.8);
+  display:flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.tabs{
+  display:flex;
+  gap: 8px;
+  align-items:center;
+  flex-wrap: wrap;
+}
+.tab{
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(15,37,71,.35);
+  font-size: 12px;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+}
+.tab.active{
+  color: var(--text);
+  border-color: rgba(186,12,47,.35);
+  background: rgba(186,12,47,.12);
+}
+
+/* Smaller credit/follow (Page 3) */
+.friends-credit{
+  margin-top: 6px;
+  text-align:center;
+  font-size: 11.5px;
+  color: var(--muted);
+  opacity: 0.95;
+}
+.friends-credit a{
+  color: var(--text);
+  text-decoration:none;
+  border-bottom: 1px solid rgba(232,238,251,.25);
+}
+.friends-credit a:hover{ border-bottom-color: rgba(232,238,251,.55); }
+
+/* =========================
+   PAGE 3 layout helpers
+   ========================= */
+.share-two-col{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:12px;
+  min-height:0;
+}
+@media (max-width: 980px){
+  .share-two-col{ grid-template-columns: 1fr; }
+}
+</style>
+</head>
+
+<body>
+<header>
+  <div style="display:flex; align-items:center; gap:12px;">
+    <h1>2026 Washington Nationals Roster Builder</h1>
+    <span class="tab" id="pagePill" style="cursor:default;">Play General Manager</span>
+  </div>
+
+  <div class="top-actions">
+    <button id="copyLink" class="secondary">Copy share URL</button>
+    <button id="reset" class="secondary">Reset</button>
+
+    <div class="friends-credit" style="margin-top:0;">
+      Built by George Lewis •
+      <a href="https://georgerlewis.substack.com/" target="_blank" rel="noopener noreferrer">
+        georgerlewis.substack.com
+      </a>
+    </div>
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- ============== PAGE 1: PLAY GENERAL MANAGER ============== -->
+  <section id="page1" class="page active">
+    <div class="wrap">
+      <div class="col" style="max-width: 900px;">
+        <h2>Play General Manager</h2>
+        <div class="inner">
+          <div class="panel" style="flex: 1;">
+            <div class="panel-title inline">
+              <div>Players</div>
+              <div class="kv"></div>
+            </div>
+            <div class="panel-body" id="playersList" aria-live="polite"></div>
+          </div>
+
+          <div class="navbar">
+            <div class="tabs">
+              <span class="tab active" data-page="1">Play General Manager</span>
+              <span class="tab" data-page="2">Play Manager</span>
+              <span class="tab" data-page="3">Show your Friends</span>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button id="toPage2">Next →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col">
+        <h2>Roster Slots + Management</h2>
+        <div class="inner">
+
+          <div class="panel" style="flex: 1;">
+            <div class="panel-title">Roster (by slot)</div>
+            <div class="panel-body" id="rosterList"></div>
+          </div>
+
+          <div class="panel" style="flex: 0.65;">
+            <div class="panel-title">Roster Management</div>
+            <div class="panel-body" id="mgmtPanel"></div>
+          </div>
+
+          <div class="navbar">
+            <div></div>
+            <div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== PAGE 2: PLAY MANAGER ============== -->
+  <section id="page2" class="page">
+    <div class="wrap">
+
+      <!-- Left: Lineup -->
+      <div class="col">
+        <h2>Play Manager — Lineup</h2>
+        <div class="inner">
+          <div class="panel" style="flex: 1;">
+            <div class="panel-title inline">
+              <div>DH + Lineup</div>
+              <div class="kv"><span>DH must be from Bench</span></div>
+            </div>
+            <div class="panel-body">
+              <div style="display:flex; gap:10px; align-items:center; flex-wrap: wrap;">
+                <div>
+                  <label style="font-weight:700; font-size:12px; color:var(--muted);">Designated Hitter</label><br/>
+                  <select id="dhSelect"><option value="">(select DH)</option></select>
+                </div>
+                <div style="flex:1"></div>
+              </div>
+              <hr class="soft"/>
+              <div id="lineupList"></div>
+            </div>
+          </div>
+
+          <div class="navbar">
+            <div class="tabs">
+              <span class="tab" data-page="1">Play General Manager</span>
+              <span class="tab active" data-page="2">Play Manager</span>
+              <span class="tab" data-page="3">Show your Friends</span>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button id="backToPage1" class="secondary">← Back</button>
+              <button id="toPage3">Next →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Rotation + Bullpen -->
+      <div class="col">
+        <h2>Play Manager — Pitching</h2>
+        <div class="inner">
+          <div class="panel" style="flex: 1;">
+            <div class="panel-title">Pitching Order</div>
+            <div class="panel-body">
+              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                <div>
+                  <div style="font-weight:800; color:var(--muted); font-size:12px; letter-spacing:.4px;">Rotation (SP1–SP5)</div>
+                  <div id="rotationList" style="margin-top:8px;"></div>
+                </div>
+                <div>
+                  <div style="font-weight:800; color:var(--muted); font-size:12px; letter-spacing:.4px;">Bullpen Order (1–8)</div>
+                  <div id="bullpenList" style="margin-top:8px;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="navbar">
+            <div></div>
+            <div></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============== PAGE 3: SHOW YOUR FRIENDS (Pitching LEFT, Batters RIGHT, NAV LEFT) ============== -->
+  <section id="page3" class="page">
+    <div class="wrap">
+
+      <!-- LEFT column: pitching + NAVBAR (stays on left) -->
+      <div class="col">
+        <div class="inner">
+
+          <div class="panel" style="flex: 1;">
+            <div class="panel-title inline">
+              <div>Final Pitching Order</div>
+              <div class="kv" id="shareMetaRight"></div>
+            </div>
+
+            <div class="panel-body">
+              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                <div>
+                  <div style="font-weight:800; color:var(--muted); font-size:12px; letter-spacing:.4px;">Rotation (SP1–SP5)</div>
+                  <div id="shareRotationList" style="margin-top:8px;"></div>
+                </div>
+                <div>
+                  <div style="font-weight:800; color:var(--muted); font-size:12px; letter-spacing:.4px;">Bullpen Order (1–8)</div>
+                  <div id="shareBullpenList" style="margin-top:8px;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ✅ NAVBAR stays in LEFT column -->
+          <div class="navbar">
+            <div class="tabs">
+              <span class="tab" data-page="1">Play GM</span>
+              <span class="tab" data-page="2">Play Manager</span>
+              <span class="tab active" data-page="3">Show your Friends</span>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button id="backToPage2" class="secondary">← Back</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- RIGHT column: batters -->
+      <div class="col">
+        <div class="inner">
+
+          <div class="panel" style="flex: 1;">
+            <div class="panel-title inline">
+              <div>Final Lineup</div>
+              <div class="kv" id="shareMetaLeft"></div>
+            </div>
+
+            <div class="panel-body">
+              <div class="share-two-col">
+                <div>
+                  <div style="font-weight:800; color:var(--muted); font-size:12px; letter-spacing:.4px;">Lineup (1–9)</div>
+                  <div id="shareLineupList" style="margin-top:8px;"></div>
+                </div>
+
+                <div>
+                  <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+                    <div style="font-weight:800; color:var(--muted); font-size:12px; letter-spacing:.4px;">Bench</div>
+                    <div class="kv" id="shareBenchMeta" style="justify-content:flex-end;"></div>
+                  </div>
+                  <div id="shareBenchList" style="margin-top:8px;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="navbar">
+            <div></div>
+            <div></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</div>
+
+<script>
+/* ✅ FIX: keep layout correct if header wraps */
+function syncHeaderHeight(){
+  const h = document.querySelector("header").offsetHeight;
+  document.documentElement.style.setProperty("--header-h", `${h}px`);
+}
+window.addEventListener("resize", syncHeaderHeight);
+syncHeaderHeight();
+
+/**
+ * =========================
+ * EDIT YOUR PLAYER LIST HERE
+ * =========================
+ *
+ * Fields:
+ * - on40: 1 (40-man) / 0 (NRI) / null (unknown)
+ * - options: number|null
+ * - outOfOptions: boolean
+ * - rule5: boolean
+ */
+const PLAYERS = [
+  { id: 1,  name: "Keibert Ruiz",       posList: ["C"],                 on40: 1, options: 0,    outOfOptions: true,  rule5: false },
+  { id: 2,  name: "Luis García Jr.",    posList: ["2B","1B"],           on40: 1, options: 0,    outOfOptions: true,  rule5: false },
+  { id: 4,  name: "Josiah Gray",        posList: ["SP","RP"],           on40: 1, options: 3,    outOfOptions: false, rule5: false },
+  { id: 5,  name: "Riley Adams",        posList: ["C"],                 on40: 0, options: null, outOfOptions: false, rule5: false },
+  { id: 6,  name: "CJ Abrams",          posList: ["SS","2B"],           on40: 1, options: 2,    outOfOptions: false, rule5: false },
+  { id: 7,  name: "Jake Irvin",         posList: ["SP","RP"],           on40: 1, options: 2,    outOfOptions: false, rule5: false },
+  { id: 8,  name: "Cade Cavalli",       posList: ["SP"],                on40: 1, options: 2,    outOfOptions: false, rule5: false },
+  { id: 9,  name: "Jacob Young",        posList: ["CF"],                on40: 1, options: 3,    outOfOptions: false, rule5: false },
+  { id: 10, name: "Mitchell Parker",    posList: ["SP","RP"],           on40: 1, options: 3,    outOfOptions: false, rule5: false },
+  { id: 12, name: "James Wood",         posList: ["LF","RF"],           on40: 1, options: 3,    outOfOptions: false, rule5: false },
+  { id: 13, name: "Dylan Crews",        posList: ["CF","RF"],           on40: 1, options: 3,    outOfOptions: false, rule5: false },
+  { id: 14, name: "Brad Lord",          posList: ["SP"],                on40: 1, options: 3,    outOfOptions: false, rule5: false },
+  { id: 15, name: "Daylen Lile",        posList: ["LF"],                on40: 1, options: 3,    outOfOptions: false, rule5: false },
+  { id: 16, name: "Brady House",        posList: ["3B"],                on40: 1, options: 3,    outOfOptions: false, rule5: false },
+  { id: 17, name: "Robert Hassell III", posList: ["RF","LF","CF"],       on40: 1, options: 3,    outOfOptions: false, rule5: false },
+  { id: 18, name: "Nasim Nunez",        posList: ["SS","2B"],           on40: 1, options: 2,    outOfOptions: false, rule5: false },
+  { id: 19, name: "Andres Chaparro",    posList: ["1B"],                on40: 1, options: 2,    outOfOptions: false, rule5: false },
+  { id: 20, name: "Jose Tena",          posList: ["2B","3B"],           on40: 1, options: 0,    outOfOptions: true,  rule5: false },
+  { id: 21, name: "Clayton Beeter",     posList: ["RP"],                on40: 1, options: 1,    outOfOptions: false, rule5: false },
+  { id: 22, name: "Cole Henry",         posList: ["RP"],                on40: 1, options: 2,    outOfOptions: false, rule5: false },
+  { id: 23, name: "PJ Poulin",          posList: ["RP"],                on40: 1, options: 3,    outOfOptions: false, rule5: false },
+  { id: 24, name: "Julian Fernandez",   posList: ["RP"],                on40: 1, options: 1,    outOfOptions: false, rule5: false },
+  { id: 26, name: "Orlando Ribalta",    posList: ["RP"],                on40: 1, options: 1,    outOfOptions: false, rule5: false },
+  { id: 27, name: "Jackson Rutledge",   posList: ["RP"],                on40: 1, options: 1,    outOfOptions: false, rule5: false },
+  { id: 28, name: "Drew Millas",        posList: ["C"],                 on40: 1, options: 1,    outOfOptions: false, rule5: false },
+  { id: 29, name: "Joey Wiemer",        posList: ["RF","LF","CF"],       on40: 1, options: 0,    outOfOptions: true,  rule5: false },
+  { id: 30, name: "Foster Griffin",     posList: ["SP"],                on40: 1, options: 2,    outOfOptions: false, rule5: false },
+  { id: 31, name: "Richard Lovelady",   posList: ["RP"],                on40: 1, options: 0,    outOfOptions: true,  rule5: false },
+  { id: 32, name: "Gus Varland",        posList: ["RP"],                on40: 1, options: 1,    outOfOptions: false, rule5: false },
+  { id: 33, name: "Griff McGarry",      posList: ["RP"],                on40: 1, options: null, outOfOptions: null,  rule5: true  },
+  { id: 34, name: "Harry Ford",         posList: ["C"],                 on40: 1, options: 3,    outOfOptions: false, rule5: false },
+  { id: 35, name: "Abimelec Ortiz",     posList: ["1B"],                on40: 1, options: 3,    outOfOptions: false, rule5: false },
+  { id: 36, name: "Matt Mervis",        posList: ["1B"],                on40: 0, options: 1,    outOfOptions: false, rule5: false },
+  { id: 37, name: "Sergio Alcantara",   posList: ["SS","2B","3B"],       on40: 0, options: 0,    outOfOptions: true,  rule5: false },
+  { id: 38, name: "Christian Franklin", posList: ["RF","LF","CF"],       on40: 1, options: 3,    outOfOptions: false, rule5: false },
+  { id: 39, name: "Phillip Glasser",    posList: ["RF","LF","2B"],       on40: 0, options: 3,    outOfOptions: false, rule5: false },
+  { id: 40, name: "Luis Perales",       posList: ["RP","SP"],            on40: 1, options: 1,    outOfOptions: false, rule5: false },
+  { id: 41, name: "Jake Eder",          posList: ["RP"],                on40: 1, options: 1,    outOfOptions: false, rule5: false },
+  { id: 42, name: "Riley Cornelio",     posList: ["RP"],                on40: 1, options: 3,    outOfOptions: false, rule5: false },
+  { id: 43, name: "Andrew Alvarez",     posList: ["RP","SP"],            on40: 1, options: 3,    outOfOptions: false, rule5: false },
+  { id: 44, name: "Ken Waldichuk",      posList: ["RP","SP"],            on40: 1, options: 2,    outOfOptions: false, rule5: false },
+  { id: 45, name: "Shinnosuke Ogasawara", posList: ["RP"],              on40: 0, options: 2,    outOfOptions: false, rule5: false },
+  { id: 46, name: "Andry Lara",         posList: ["RP"],                on40: 1, options: 2,    outOfOptions: false, rule5: false },
+  { id: 47, name: "Paxton Shultz",      posList: ["RP"],                on40: 1, options: 2,    outOfOptions: false, rule5: false },
+  { id: 48, name: "Trevor Gott",        posList: ["RP"],                on40: 0, options: 0,    outOfOptions: true,  rule5: false },
+  { id: 49, name: "Bryce Montes de Oca", posList: ["RP"],               on40: 0, options: 3,    outOfOptions: false, rule5: false },
+  { id: 50, name: "Zach Penrod",        posList: ["RP"],                on40: 0, options: 2,    outOfOptions: false, rule5: false },
+];
+
+let PLAYERS_ACTIVE = [...PLAYERS];
+let tempId = 10000;
+
+// OF split
+const OF_SLOTS = ["LF","CF","RF"];
+
+const ROSTER_LIMITS = {
+  SP:5, RP:8, /* bullpen always 8 */
+  C:1, "1B":1, "2B":1, "3B":1, SS:1,
+  LF:1, CF:1, RF:1,
+  Bench:5
+};
+const BENCH_ELIGIBLE = ["C","1B","2B","3B","SS","LF","CF","RF","OF"];
+const POSITION_ORDER = ["SP","RP","C","1B","2B","3B","SS","LF","CF","RF","Bench"];
+
+let rosterAssignments = {}; // { [id]: slot }
+let dh = null;
+
+// Orders
+let lineup = [];
+let rotationOrder = [];
+let bullpenOrder = [];
+
+// DOM
+const playersListEl = document.getElementById("playersList");
+const rosterListEl  = document.getElementById("rosterList");
+const mgmtPanelEl   = document.getElementById("mgmtPanel");
+const dhSelectEl    = document.getElementById("dhSelect");
+const lineupListEl  = document.getElementById("lineupList");
+const rotationListEl= document.getElementById("rotationList");
+const bullpenListEl = document.getElementById("bullpenList");
+
+// Page 3 DOM
+const shareMetaLeftEl   = document.getElementById("shareMetaLeft");
+const shareMetaRightEl  = document.getElementById("shareMetaRight");
+const shareBenchMetaEl  = document.getElementById("shareBenchMeta");
+const shareLineupListEl = document.getElementById("shareLineupList");
+const shareBenchListEl  = document.getElementById("shareBenchList");
+const shareRotationListEl = document.getElementById("shareRotationList");
+const shareBullpenListEl  = document.getElementById("shareBullpenList");
+
+// ---------- Share state ----------
+function encodeState(obj){
+  const json = JSON.stringify(obj);
+  return btoa(unescape(encodeURIComponent(json)))
+    .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function decodeState(b64){
+  try{
+    const padded = b64.replace(/-/g,'+').replace(/_/g,'/') + '==='.slice((b64.length + 3) % 4);
+    const json = decodeURIComponent(escape(atob(padded)));
+    return JSON.parse(json);
+  } catch { return null; }
+}
+function currentShareState(){
+  return { v:4, rosterAssignments, dh, lineup, rotationOrder, bullpenOrder };
+}
+function applyShareState(state){
+  if(!state || state.v !== 4) return false;
+
+  rosterAssignments = {};
+  if (state.rosterAssignments && typeof state.rosterAssignments === "object"){
+    for (const id in state.rosterAssignments){
+      const pid = Number(id);
+      const slot = state.rosterAssignments[id];
+      if (PLAYERS_ACTIVE.some(p => p.id === pid) && POSITION_ORDER.includes(slot)){
+        rosterAssignments[pid] = slot;
+      }
+    }
+  }
+
+  dh = (typeof state.dh === "number" && rosterAssignments[state.dh] === "Bench") ? state.dh : null;
+
+  lineup = Array.isArray(state.lineup) ? state.lineup.filter(id => PLAYERS_ACTIVE.some(p=>p.id===id)) : [];
+  rotationOrder = Array.isArray(state.rotationOrder) ? state.rotationOrder.filter(id => PLAYERS_ACTIVE.some(p=>p.id===id)) : [];
+  bullpenOrder  = Array.isArray(state.bullpenOrder)  ? state.bullpenOrder.filter(id => PLAYERS_ACTIVE.some(p=>p.id===id)) : [];
+
+  renderAll();
+  return true;
+}
+(function loadStateFromURL(){
+  const url = new URL(window.location.href);
+  const token = url.searchParams.get('s') || new URLSearchParams(url.hash.replace(/^#/,'')).get('s');
+  if (!token) return;
+  const st = decodeState(token);
+  if (st) applyShareState(st);
+})();
+function buildShareURL(){
+  const token = encodeState(currentShareState());
+  const url = new URL(window.location.href);
+  url.searchParams.set('s', token);
+  url.hash = '';
+  return url.toString();
+}
+function syncAddressBar(){
+  const token = encodeState(currentShareState());
+  const url = new URL(window.location.href);
+  url.searchParams.set('s', token);
+  window.history.replaceState(null, '', url);
+}
+
+// ---------- Utilities ----------
+function getPlayerById(id){ return PLAYERS_ACTIVE.find(p => p.id == id); }
+
+function countAssigned(){
+  const c = {};
+  Object.values(rosterAssignments).forEach(slot => c[slot] = (c[slot]||0) + 1);
+  return c;
+}
+
+function isEligibleForSlot(player, slot){
+  if (!player) return false;
+  if (OF_SLOTS.includes(slot)){
+    return player.posList.includes("OF") || player.posList.includes(slot);
+  }
+  if (slot === "Bench"){
+    return player.posList.some(p => BENCH_ELIGIBLE.includes(p));
+  }
+  return player.posList.includes(slot);
+}
+
+function statusPill(p){
+  const is40 = (p.on40 === true || p.on40 === 1);
+  const isNRI = (p.on40 === false || p.on40 === 0);
+
+  if (is40) return `<span class="pill man40">40-man</span>`;
+  if (isNRI) return `<span class="pill nri">NRI</span>`;
+  return "";
+}
+
+function playerBadges(p){
+  const parts = [];
+  if (typeof p.options === "number") parts.push(`<span class="badge">Opt: ${p.options}</span>`);
+  if (p.outOfOptions) parts.push(`<span class="badge warn">Out of options</span>`);
+  if (p.rule5) parts.push(`<span class="badge warn">Rule 5</span>`);
+  return parts.length ? `<div class="badges">${parts.join("")}</div>` : "";
+}
+
+function getRosteredBySlot(slot){
+  return Object.keys(rosterAssignments)
+    .filter(id => rosterAssignments[id] === slot)
+    .map(id => getPlayerById(Number(id)))
+    .filter(Boolean);
+}
+
+function removeFromRoster(id){
+  delete rosterAssignments[id];
+  if (dh === id) dh = null;
+
+  lineup = lineup.filter(x => x !== id);
+  rotationOrder = rotationOrder.filter(x => x !== id);
+  bullpenOrder = bullpenOrder.filter(x => x !== id);
+
+  renderAll();
+}
+
+// ---------- Add / Other ----------
+function addOtherPlayer(slot){
+  const name = prompt(`Enter name for Other (${slot}) player:`);
+  if(!name) return;
+
+  const posList = OF_SLOTS.includes(slot) ? ["OF"] : [slot];
+
+  const newP = { id: tempId++, name, posList, on40: null, options: null, outOfOptions:false, rule5:false };
+  PLAYERS_ACTIVE.push(newP);
+  rosterAssignments[newP.id] = slot;
+  renderAll();
+}
+
+function onAddClick(id, preferredSlot){
+  const p = getPlayerById(id);
+  if (!p || rosterAssignments[id]) return;
+
+  const counts = countAssigned();
+
+  if (preferredSlot && ROSTER_LIMITS[preferredSlot] && isEligibleForSlot(p, preferredSlot) && (counts[preferredSlot]||0) < ROSTER_LIMITS[preferredSlot]){
+    rosterAssignments[id] = preferredSlot;
+    renderAll();
+    return;
+  }
+
+  const alt = POSITION_ORDER.find(slot => {
+    if (slot === "Bench") return false;
+    return ROSTER_LIMITS[slot] && isEligibleForSlot(p, slot) && (counts[slot]||0) < ROSTER_LIMITS[slot];
+  });
+  if (alt){
+    rosterAssignments[id] = alt;
+    renderAll();
+    return;
+  }
+
+  if ((counts["Bench"]||0) < ROSTER_LIMITS["Bench"] && isEligibleForSlot(p, "Bench")){
+    rosterAssignments[id] = "Bench";
+    renderAll();
+    return;
+  }
+
+  alert("No open slots for that player.");
+}
+
+// ---------- Renders (Page 1) ----------
+function renderPlayers(){
+  playersListEl.innerHTML = "";
+
+  const sections = ["SP","RP","C","1B","2B","3B","SS","LF","CF","RF"];
+
+  sections.forEach(slot => {
+    const header = document.createElement("div");
+    header.className = "pos-header";
+    header.textContent = slot;
+    playersListEl.appendChild(header);
+
+    PLAYERS_ACTIVE
+      .filter(p => isEligibleForSlot(p, slot))
+      .forEach(p => playersListEl.appendChild(makePlayerRow(p, slot)));
+
+    const btn = document.createElement("button");
+    btn.textContent = "Add Other";
+    btn.className = "secondary";
+    btn.style.margin = "6px 0 8px 0";
+    btn.onclick = () => addOtherPlayer(slot);
+    playersListEl.appendChild(btn);
+  });
+}
+
+function makePlayerRow(p, slot){
+  const div = document.createElement("div");
+  div.className = "row";
+
+  const assigned = rosterAssignments[p.id] !== undefined;
+
+  const left = document.createElement("div");
+  left.className = "meta";
+  left.innerHTML = `
+    <strong>${p.name}</strong>
+    ${statusPill(p)}
+    <div class="sub">(${p.posList.join(", ")})</div>
+    ${playerBadges(p)}
+  `;
+
+  const right = document.createElement("div");
+  if (!assigned){
+    const b = document.createElement("button");
+    b.textContent = "Add";
+    b.onclick = () => onAddClick(p.id, slot);
+    right.appendChild(b);
+  } else {
+    const lbl = document.createElement("div");
+    lbl.style.color = "var(--muted)";
+    lbl.style.fontSize = "12px";
+    lbl.style.marginBottom = "6px";
+    lbl.textContent = `→ ${rosterAssignments[p.id]}`;
+    const rm = document.createElement("button");
+    rm.textContent = "Remove";
+    rm.className = "secondary";
+    rm.onclick = () => removeFromRoster(p.id);
+    right.appendChild(lbl);
+    right.appendChild(rm);
+  }
+
+  div.appendChild(left);
+  div.appendChild(right);
+  return div;
+}
+
+function renderRoster(){
+  rosterListEl.innerHTML = "";
+
+  POSITION_ORDER.forEach(slot => {
+    const cnt = getRosteredBySlot(slot).length;
+    const header = document.createElement("div");
+    header.className = "pos-header";
+    header.textContent = `${slot} (${cnt}/${ROSTER_LIMITS[slot]||0})`;
+    rosterListEl.appendChild(header);
+
+    Object.keys(rosterAssignments)
+      .filter(id => rosterAssignments[id] === slot)
+      .forEach(id => {
+        const p = getPlayerById(Number(id));
+        if (!p) return;
+
+        const r = document.createElement("div");
+        r.className = "row";
+        r.innerHTML = `
+          <div class="meta">
+            <strong>${p.name}</strong>
+            ${statusPill(p)}
+            <div class="sub">(${slot})</div>
+            ${playerBadges(p)}
+          </div>
+          <div><button class="secondary" onclick="removeFromRoster(${p.id})">Remove</button></div>
+        `;
+        rosterListEl.appendChild(r);
+      });
+  });
+}
+
+function renderMgmtPanel(){
+  const selected = Object.keys(rosterAssignments).map(id => getPlayerById(Number(id))).filter(Boolean);
+  const unselected = PLAYERS_ACTIVE.filter(p => !rosterAssignments[p.id]);
+
+  const needs40Add = selected.filter(p => (p.on40 === false || p.on40 === 0));
+  const waiverRisk = unselected.filter(p => p.outOfOptions === true);
+  const rule5Risk  = unselected.filter(p => p.rule5 === true);
+
+  function block(title, list, warn){
+    const items = list.length
+      ? `<ul style="margin:6px 0 0 18px; padding:0; color:${warn? 'var(--warn)' : 'var(--text)'};">${list.map(p=>`<li style="margin:4px 0;">${p.name}</li>`).join("")}</ul>`
+      : `<div style="margin-top:6px; color: var(--muted);">None</div>`;
+    return `
+      <div style="padding: 2px 0 10px 0;">
+        <div style="font-weight:800; font-size:12px; letter-spacing:.3px; color:${warn? 'var(--warn)' : 'var(--muted)'};">${title}</div>
+        ${items}
+      </div>
+    `;
+  }
+
+  mgmtPanelEl.innerHTML = `
+    ${block("Selected but not on 40-man (needs add)", needs40Add, needs40Add.length>0)}
+    <hr class="soft"/>
+    ${block("Not selected + out of options (waiver risk if sent down)", waiverRisk, waiverRisk.length>0)}
+    <hr class="soft"/>
+    ${block("Not selected + Rule 5 constraint", rule5Risk, rule5Risk.length>0)}
+  `;
+}
+
+// ---------- Page 2: DH + lineup + rotation/bullpen ----------
+function renderDHSelector(){
+  if (!dhSelectEl) return;
+  dhSelectEl.innerHTML = `<option value="">(select DH)</option>`;
+
+  Object.keys(rosterAssignments)
+    .filter(id => rosterAssignments[id] === "Bench")
+    .forEach(id => {
+      const p = getPlayerById(Number(id));
+      if (!p) return;
+      const opt = document.createElement("option");
+      opt.value = p.id;
+      opt.textContent = `${p.name} (Bench)`;
+      dhSelectEl.appendChild(opt);
+    });
+
+  const stillValid = dh && rosterAssignments[dh] === "Bench";
+  dh = stillValid ? dh : null;
+  dhSelectEl.value = dh ? String(dh) : "";
+}
+dhSelectEl?.addEventListener("change", () => {
+  dh = dhSelectEl.value ? Number(dhSelectEl.value) : null;
+  syncLineupWithRoster();
+  renderLineup();
+  syncAddressBar();
+});
+
+function startersForLineup(){
+  const slots = ["C","1B","2B","3B","SS","LF","CF","RF"];
+  const pool = [];
+  slots.forEach(slot => {
+    const first = getRosteredBySlot(slot)[0];
+    if (first) pool.push(first);
+  });
+  if (dh){
+    const p = getPlayerById(dh);
+    if (p) pool.push(p);
+  }
+  const seen = new Set();
+  return pool.filter(p => (seen.has(p.id) ? false : (seen.add(p.id), true)));
+}
+
+function syncLineupWithRoster(){
+  const pool = startersForLineup().map(p => p.id);
+  const keep = lineup.filter(id => pool.includes(id));
+  const missing = pool.filter(id => !keep.includes(id));
+  lineup = [...keep, ...missing];
+}
+
+function syncPitchOrders(){
+  const sps = getRosteredBySlot("SP").slice(0, ROSTER_LIMITS.SP).map(p => p.id);
+  const rps = getRosteredBySlot("RP").slice(0, ROSTER_LIMITS.RP).map(p => p.id);
+
+  rotationOrder = rotationOrder.filter(id => sps.includes(id));
+  bullpenOrder  = bullpenOrder.filter(id => rps.includes(id));
+
+  const missingSP = sps.filter(id => !rotationOrder.includes(id));
+  const missingRP = rps.filter(id => !bullpenOrder.includes(id));
+
+  rotationOrder = [...rotationOrder, ...missingSP];
+  bullpenOrder  = [...bullpenOrder, ...missingRP];
+}
+
+function moveInArray(arr, id, dir){
+  const idx = arr.indexOf(id);
+  if (idx < 0) return;
+  const j = idx + (dir === "up" ? -1 : 1);
+  if (j < 0 || j >= arr.length) return;
+  const t = arr[idx];
+  arr[idx] = arr[j];
+  arr[j] = t;
+}
+
+function renderLineup(){
+  if (!lineupListEl) return;
+  lineupListEl.innerHTML = "";
+  syncLineupWithRoster();
+
+  lineup.forEach((id, i) => {
+    const p = getPlayerById(id);
+    if (!p) return;
+
+    const slot = (dh && id === dh) ? "DH" : (rosterAssignments[id] || p.posList[0] || "");
+    const row = document.createElement("div");
+    row.className = "row";
+    row.innerHTML = `
+      <div class="meta">
+        <strong>${i+1}.</strong> ${p.name}
+        ${statusPill(p)}
+        <div class="sub">(${slot})</div>
+      </div>
+      <div style="display:flex; gap:6px;">
+        <button class="secondary" ${i===0?'disabled':''} data-act="lu-up" data-id="${id}">↑</button>
+        <button class="secondary" ${i===lineup.length-1?'disabled':''} data-act="lu-down" data-id="${id}">↓</button>
+      </div>
+    `;
+    lineupListEl.appendChild(row);
+  });
+
+  lineupListEl.querySelectorAll("button[data-act]").forEach(btn => {
+    btn.onclick = () => {
+      const id = Number(btn.getAttribute("data-id"));
+      const act = btn.getAttribute("data-act");
+      moveInArray(lineup, id, act.endsWith("up") ? "up" : "down");
+      renderLineup();
+      syncAddressBar();
+    };
+  });
+}
+
+function renderRotation(){
+  if (!rotationListEl) return;
+  rotationListEl.innerHTML = "";
+  syncPitchOrders();
+
+  rotationOrder.forEach((id, i) => {
+    const p = getPlayerById(id);
+    if (!p) return;
+    const row = document.createElement("div");
+    row.className = "row";
+    row.innerHTML = `
+      <div class="meta">
+        <strong>SP${i+1}.</strong> ${p.name}
+        ${statusPill(p)}
+      </div>
+      <div style="display:flex; gap:6px;">
+        <button class="secondary" ${i===0?'disabled':''} data-act="sp-up" data-id="${id}">↑</button>
+        <button class="secondary" ${i===rotationOrder.length-1?'disabled':''} data-act="sp-down" data-id="${id}">↓</button>
+      </div>
+    `;
+    rotationListEl.appendChild(row);
+  });
+
+  rotationListEl.querySelectorAll("button[data-act]").forEach(btn => {
+    btn.onclick = () => {
+      const id = Number(btn.getAttribute("data-id"));
+      const act = btn.getAttribute("data-act");
+      moveInArray(rotationOrder, id, act.endsWith("up") ? "up" : "down");
+      renderRotation();
+      syncAddressBar();
+    };
+  });
+}
+
+function renderBullpen(){
+  if (!bullpenListEl) return;
+  bullpenListEl.innerHTML = "";
+  syncPitchOrders();
+
+  bullpenOrder.forEach((id, i) => {
+    const p = getPlayerById(id);
+    if (!p) return;
+    const row = document.createElement("div");
+    row.className = "row";
+    row.innerHTML = `
+      <div class="meta">
+        <strong>${i+1}.</strong> ${p.name}
+        ${statusPill(p)}
+      </div>
+      <div style="display:flex; gap:6px;">
+        <button class="secondary" ${i===0?'disabled':''} data-act="rp-up" data-id="${id}">↑</button>
+        <button class="secondary" ${i===bullpenOrder.length-1?'disabled':''} data-act="rp-down" data-id="${id}">↓</button>
+      </div>
+    `;
+    bullpenListEl.appendChild(row);
+  });
+
+  bullpenListEl.querySelectorAll("button[data-act]").forEach(btn => {
+    btn.onclick = () => {
+      const id = Number(btn.getAttribute("data-id"));
+      const act = btn.getAttribute("data-act");
+      moveInArray(bullpenOrder, id, act.endsWith("up") ? "up" : "down");
+      renderBullpen();
+      syncAddressBar();
+    };
+  });
+}
+
+// ---------- Page 3 (READ-ONLY) ----------
+function renderSharePage3(){
+  syncLineupWithRoster();
+  syncPitchOrders();
+
+  const bench = getRosteredBySlot("Bench").filter(p => p.id !== dh);
+  const spCount = getRosteredBySlot("SP").length;
+  const rpCount = getRosteredBySlot("RP").length;
+
+  const dhName = dh ? (getPlayerById(dh)?.name || "Unknown") : null;
+
+  if (shareMetaLeftEl){
+    shareMetaLeftEl.innerHTML = `
+      <span>DH: ${dhName ? dhName : "None"}</span>
+      <span>Lineup: ${lineup.length}/9</span>
+    `;
+  }
+  if (shareBenchMetaEl){
+    shareBenchMetaEl.innerHTML = `<span>${bench.length}/5</span>`;
+  }
+  if (shareMetaRightEl){
+    shareMetaRightEl.innerHTML = `
+      <span>SP: ${spCount}/5</span>
+      <span>RP: ${rpCount}/8</span>
+    `;
+  }
+
+  // Lineup (read-only) — single line like: "SS CJ Abrams"
+  if (shareLineupListEl){
+    shareLineupListEl.innerHTML = "";
+    if (!lineup.length){
+      shareLineupListEl.innerHTML = `<div style="color:var(--muted); font-size:12px; margin-top:8px;">No lineup set yet. Go to Play Manager to set DH and ordering.</div>`;
+    } else {
+      lineup.forEach((id) => {
+        const p = getPlayerById(id);
+        if (!p) return;
+
+        const pos = (dh && id === dh)
+          ? "DH"
+          : (rosterAssignments[id] && rosterAssignments[id] !== "Bench"
+              ? rosterAssignments[id]
+              : (p.posList?.[0] || "")
+            );
+
+        const row = document.createElement("div");
+        row.className = "row";
+        row.innerHTML = `
+          <div class="meta">
+            <strong>${pos}</strong> ${p.name}
+          </div>
+          <div style="color:var(--muted); font-size:12px; padding-top:2px;">&nbsp;</div>
+        `;
+        shareLineupListEl.appendChild(row);
+      });
+    }
+  }
+
+  // Bench (read-only) — no "(Bench)" subtext
+  if (shareBenchListEl){
+    shareBenchListEl.innerHTML = "";
+    if (!bench.length){
+      shareBenchListEl.innerHTML = `<div style="color:var(--muted); font-size:12px; margin-top:8px;">No bench selected.</div>`;
+    } else {
+      bench.forEach(p => {
+        const row = document.createElement("div");
+        row.className = "row";
+        row.innerHTML = `
+          <div class="meta">
+            <strong>${p.name}</strong>
+          </div>
+          <div style="color:var(--muted); font-size:12px; padding-top:2px;">&nbsp;</div>
+        `;
+        shareBenchListEl.appendChild(row);
+      });
+    }
+  }
+
+  // Rotation (read-only)
+  if (shareRotationListEl){
+    shareRotationListEl.innerHTML = "";
+    if (!rotationOrder.length){
+      shareRotationListEl.innerHTML = `<div style="color:var(--muted); font-size:12px; margin-top:8px;">No starters selected.</div>`;
+    } else {
+      rotationOrder.forEach((id, i) => {
+        const p = getPlayerById(id);
+        if (!p) return;
+        const row = document.createElement("div");
+        row.className = "row";
+        row.innerHTML = `
+          <div class="meta">
+            <strong>SP${i+1}.</strong> ${p.name}
+          </div>
+          <div style="color:var(--muted); font-size:12px; padding-top:2px;">&nbsp;</div>
+        `;
+        shareRotationListEl.appendChild(row);
+      });
+    }
+  }
+
+  // Bullpen (read-only)
+  if (shareBullpenListEl){
+    shareBullpenListEl.innerHTML = "";
+    if (!bullpenOrder.length){
+      shareBullpenListEl.innerHTML = `<div style="color:var(--muted); font-size:12px; margin-top:8px;">No relievers selected.</div>`;
+    } else {
+      bullpenOrder.forEach((id, i) => {
+        const p = getPlayerById(id);
+        if (!p) return;
+        const row = document.createElement("div");
+        row.className = "row";
+        row.innerHTML = `
+          <div class="meta">
+            <strong>${i+1}.</strong> ${p.name}
+          </div>
+          <div style="color:var(--muted); font-size:12px; padding-top:2px;">&nbsp;</div>
+        `;
+        shareBullpenListEl.appendChild(row);
+      });
+    }
+  }
+}
+
+// ---------- Page navigation ----------
+function setPage(n){
+  const p1 = document.getElementById("page1");
+  const p2 = document.getElementById("page2");
+  const p3 = document.getElementById("page3");
+  const pill = document.getElementById("pagePill");
+
+  p1.classList.toggle("active", n === 1);
+  p2.classList.toggle("active", n === 2);
+  p3.classList.toggle("active", n === 3);
+
+  pill.textContent = n === 1 ? "Play General Manager" : (n === 2 ? "Play Manager" : "Show your Friends");
+
+  if (n === 2){
+    renderDHSelector();
+    syncLineupWithRoster();
+    syncPitchOrders();
+    renderLineup();
+    renderRotation();
+    renderBullpen();
+  }
+
+  if (n === 3){
+    renderSharePage3();
+  }
+
+  syncAddressBar();
+}
+
+document.getElementById("toPage2").onclick = () => setPage(2);
+document.getElementById("backToPage1").onclick = () => setPage(1);
+document.getElementById("toPage3").onclick = () => setPage(3);
+document.getElementById("backToPage2").onclick = () => setPage(2);
+
+document.querySelectorAll(".tab[data-page]").forEach(t => {
+  t.onclick = () => setPage(Number(t.getAttribute("data-page")));
+});
+
+// ---------- Top actions ----------
+document.getElementById("copyLink").onclick = async () => {
+  const link = buildShareURL();
+  try{
+    await navigator.clipboard.writeText(link);
+    alert("Share URL copied to clipboard!");
+  }catch{
+    prompt("Copy this URL:", link);
+  }
+};
+
+document.getElementById("reset").onclick = () => {
+  rosterAssignments = {};
+  dh = null;
+  lineup = [];
+  rotationOrder = [];
+  bullpenOrder = [];
+  renderAll();
+};
+
+// ---------- Main render ----------
+function renderAll(){
+  renderPlayers();
+  renderRoster();
+  renderMgmtPanel();
+
+  renderDHSelector();
+  syncLineupWithRoster();
+  syncPitchOrders();
+
+  if (document.getElementById("page2").classList.contains("active")){
+    renderLineup(); renderRotation(); renderBullpen();
+  }
+  if (document.getElementById("page3").classList.contains("active")){
+    renderSharePage3();
+  }
+
+  syncAddressBar();
+  syncHeaderHeight();
+}
+
+// ---------- startup ----------
+renderAll();
+</script>
+</body>
+</html>
