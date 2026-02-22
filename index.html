@@ -753,13 +753,7 @@ function applyShareState(state){
   renderAll();
   return true;
 }
-(function loadStateFromURL(){
-  const url = new URL(window.location.href);
-  const token = url.searchParams.get('s') || new URLSearchParams(url.hash.replace(/^#/,'')).get('s');
-  if (!token) return;
-  const st = decodeState(token);
-  if (st) applyShareState(st);
-})();
+
 function buildShareURL(){
   const token = encodeState(currentShareState());
   const url = new URL(window.location.href);
@@ -1379,6 +1373,15 @@ function renderAll(){
 }
 
 // ---------- startup ----------
+
+(function loadStateFromURL(){
+  const url = new URL(window.location.href);
+  const token = url.searchParams.get('s') || new URLSearchParams(url.hash.replace(/^#/,'')).get('s');
+  if (!token) return;
+  const st = decodeState(token);
+  if (st) applyShareState(st);
+})();
+
 renderAll();
 </script>
 </body>
